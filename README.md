@@ -20,7 +20,8 @@ Add MicroContainer to your Package.swift dependencies:
 ```swift
 dependencies: [
     .package(url: "https://github.com/otaviocc/MicroContainer.git", from: "0.0.2")
-]```
+]
+```
 
 ## Quick Start
 
