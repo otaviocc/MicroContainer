@@ -12,6 +12,7 @@ public final class DependencyContainer {
     private let lock = NSRecursiveLock()
     private var dependencies: [DependencyName: Any] = [:]
     private var staticDependencies: [DependencyName: Any] = [:]
+    private let resolutionStackKey = "MicroContainer.ResolutionStack"
 
     // MARK: - Life cycle
 
@@ -24,6 +25,8 @@ public final class DependencyContainer {
     public enum ResolutionError: Error {
         /// No registration exists for the requested type.
         case notRegistered(type: Any.Type)
+        /// A circular dependency was detected while resolving.
+        case circularChain(chain: [String])
     }
 
     /// Registers a dependency.
@@ -89,19 +92,28 @@ public final class DependencyContainer {
             fatalError("Type not registered: \(T.self)")
         }
 
+        if let cycle = beginResolution(for: dependencyKey) {
+            lock.unlock()
+            fatalError("Circular dependency detected: \(cycle.joined(separator: " -> "))")
+        }
+
         switch dependency.allocation {
         case .dynamic:
             let factory = dependency.factory
             lock.unlock()
-            return factory(self)
+            let value: T = factory(self)
+            endResolution(for: dependencyKey)
+            return value
         case .static:
             if let resolvedDependency = staticDependencies[dependencyKey] as? T {
                 lock.unlock()
+                endResolution(for: dependencyKey)
                 return resolvedDependency
             } else {
                 let resolvedDependency = dependency.factory(self)
                 staticDependencies[dependencyKey] = resolvedDependency
                 lock.unlock()
+                endResolution(for: dependencyKey)
                 return resolvedDependency
             }
         }
@@ -120,19 +132,28 @@ public final class DependencyContainer {
             return nil
         }
 
+        if let _ = beginResolution(for: dependencyKey) {
+            lock.unlock()
+            return nil
+        }
+
         switch dependency.allocation {
         case .dynamic:
             let factory = dependency.factory
             lock.unlock()
-            return factory(self)
+            let value: T = factory(self)
+            endResolution(for: dependencyKey)
+            return value
         case .static:
             if let resolvedDependency = staticDependencies[dependencyKey] as? T {
                 lock.unlock()
+                endResolution(for: dependencyKey)
                 return resolvedDependency
             } else {
                 let resolvedDependency = dependency.factory(self)
                 staticDependencies[dependencyKey] = resolvedDependency
                 lock.unlock()
+                endResolution(for: dependencyKey)
                 return resolvedDependency
             }
         }
@@ -152,19 +173,28 @@ public final class DependencyContainer {
             throw ResolutionError.notRegistered(type: T.self)
         }
 
+        if let cycle = beginResolution(for: dependencyKey) {
+            lock.unlock()
+            throw ResolutionError.circularChain(chain: cycle)
+        }
+
         switch dependency.allocation {
         case .dynamic:
             let factory = dependency.factory
             lock.unlock()
-            return factory(self)
+            let value: T = factory(self)
+            endResolution(for: dependencyKey)
+            return value
         case .static:
             if let resolvedDependency = staticDependencies[dependencyKey] as? T {
                 lock.unlock()
+                endResolution(for: dependencyKey)
                 return resolvedDependency
             } else {
                 let resolvedDependency = dependency.factory(self)
                 staticDependencies[dependencyKey] = resolvedDependency
                 lock.unlock()
+                endResolution(for: dependencyKey)
                 return resolvedDependency
             }
         }
@@ -237,4 +267,30 @@ protocol AnyDependencyFactoryInvocable: AnyDependencyLifetimeProviding {
 
 extension Dependency: AnyDependencyFactoryInvocable {
     func invokeFactory(with container: DependencyContainer) -> Any { factory(container) }
+}
+
+// MARK: - Circular dependency tracking
+
+private extension DependencyContainer {
+    func beginResolution(for key: DependencyName) -> [String]? {
+        let name = String(describing: key)
+        var stack = Thread.current.threadDictionary[resolutionStackKey] as? [String] ?? []
+        if stack.contains(name) {
+            return stack + [name]
+        }
+        stack.append(name)
+        Thread.current.threadDictionary[resolutionStackKey] = stack
+        return nil
+    }
+
+    func endResolution(for key: DependencyName) {
+        let name = String(describing: key)
+        var stack = Thread.current.threadDictionary[resolutionStackKey] as? [String] ?? []
+        if stack.last == name {
+            stack.removeLast()
+        } else {
+            stack.removeAll()
+        }
+        Thread.current.threadDictionary[resolutionStackKey] = stack
+    }
 }
