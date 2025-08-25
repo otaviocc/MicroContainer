@@ -1,7 +1,10 @@
+import Foundation
+
 public final class DependencyContainer {
 
     // MARK: - Properties
 
+    private let lock = NSRecursiveLock()
     private var dependencies: [DependencyName: Any] = [:]
     private var staticDependencies: [DependencyName: Any] = [:]
 
@@ -16,6 +19,8 @@ public final class DependencyContainer {
         allocation: DependencyAllocation,
         factory: @escaping (DependencyContainer) -> T
     ){
+        lock.lock()
+        defer { lock.unlock() }
         let dependencyKey = DependencyName(type: T.self)
 
         let dependency = Dependency(
@@ -30,21 +35,25 @@ public final class DependencyContainer {
     public func resolve<T>() -> T {
         let dependencyKey = DependencyName(type: T.self)
 
-        guard
-            let dependency = dependencies[dependencyKey] as? Dependency<T>
-        else {
+        lock.lock()
+        guard let dependency = dependencies[dependencyKey] as? Dependency<T> else {
+            lock.unlock()
             fatalError("\(dependencyKey) not registered")
         }
 
         switch dependency.allocation {
         case .dynamic:
-            return dependency.factory(self)
+            let factory = dependency.factory
+            lock.unlock()
+            return factory(self)
         case .static:
             if let resolvedDependency = staticDependencies[dependencyKey] as? T {
+                lock.unlock()
                 return resolvedDependency
             } else {
                 let resolvedDependency = dependency.factory(self)
                 staticDependencies[dependencyKey] = resolvedDependency
+                lock.unlock()
                 return resolvedDependency
             }
         }
