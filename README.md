@@ -18,8 +18,9 @@ A tiny, dependency-free Dependency Injection (DI) container for Swift.
 Add MicroContainer to your Package.swift dependencies:
 
 ```swift
-.package(url: "https://github.com/your/repo.git", from: "1.0.0")
-```
+dependencies: [
+    .package(url: "https://github.com/otaviocc/MicroContainer.git", from: "0.0.2")
+]```
 
 ## Quick Start
 
@@ -49,8 +50,8 @@ Register multiple implementations under the same type by using `qualifier`:
 container.registerSingleton(Client.self, qualifier: "primary") { _ in
     Client(baseURL: URL(string: "https://api.example.com")!)
 }
-container.registerSingleton(Client.self, qualifier: "staging") {
-    _ in Client(baseURL: URL(string: "https://staging.example.com")!)
+container.registerSingleton(Client.self, qualifier: "staging") { _ in
+    Client(baseURL: URL(string: "https://staging.example.com")!)
 }
 
 let primary: Client = container.resolve(qualifier: "primary")
