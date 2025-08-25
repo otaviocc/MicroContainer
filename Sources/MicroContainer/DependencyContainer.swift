@@ -3,6 +3,7 @@ import Foundation
 /// A tiny, thread-safe dependency injection container.
 ///
 /// - Supports singleton (static) and factory (dynamic) lifetimes.
+/// - Optional qualifiers for multiple registrations of the same type.
 /// - Thread-safe registration and resolution.
 /// - Factories receive the container, enabling nested resolutions.
 public final class DependencyContainer {
@@ -26,6 +27,9 @@ public final class DependencyContainer {
         /// No registration exists for the requested type.
         case notRegistered(type: Any.Type)
         /// A circular dependency was detected while resolving.
+        ///
+        /// The payload contains the human-readable chain of types involved
+        /// in the cycle, in the order they were attempted.
         case circularChain(chain: [String])
     }
 
@@ -34,6 +38,7 @@ public final class DependencyContainer {
     /// - Parameters:
     ///   - type: The type to register under (usually a protocol or concrete type).
     ///   - allocation: The lifetime of the dependency (singleton or factory).
+    ///   - qualifier: Optional name to distinguish multiple registrations for the same `type`.
     ///   - factory: A factory closure that creates the instance; receives the container for nested resolution.
     /// - Note: Thread-safe.
     public func register<T>(
@@ -59,6 +64,7 @@ public final class DependencyContainer {
     ///
     /// - Parameters:
     ///   - type: The type to register under.
+    ///   - qualifier: Optional name to distinguish multiple registrations for the same `type`.
     ///   - factory: A factory closure that creates the instance on first resolve.
     public func registerSingleton<T>(
         _ type: T.Type,
@@ -72,6 +78,7 @@ public final class DependencyContainer {
     ///
     /// - Parameters:
     ///   - type: The type to register under.
+    ///   - qualifier: Optional name to distinguish multiple registrations for the same `type`.
     ///   - factory: A factory closure invoked on every resolve.
     public func registerFactory<T>(
         _ type: T.Type,
@@ -84,6 +91,8 @@ public final class DependencyContainer {
     /// Resolves a dependency or crashes if not registered.
     ///
     /// - Returns: The resolved instance.
+    /// - Parameters:
+    ///   - qualifier: Optional name to distinguish which registration to resolve.
     /// - Warning: Triggers a runtime crash if the type is not registered. Prefer `resolveOptional()` or `resolveOrThrow()` for safer behavior.
     /// - Note: Thread-safe.
     public func resolve<T>(qualifier: String? = nil) -> T {
@@ -125,6 +134,8 @@ public final class DependencyContainer {
     /// Resolves a dependency if registered.
     ///
     /// - Returns: The resolved instance or `nil` if not registered.
+    /// - Parameters:
+    ///   - qualifier: Optional name to distinguish which registration to resolve.
     /// - Note: Thread-safe.
     public func resolveOptional<T>(qualifier: String? = nil) -> T? {
         let dependencyKey = DependencyName(type: T.self, qualifier: qualifier)
@@ -166,6 +177,8 @@ public final class DependencyContainer {
     ///
     /// - Returns: The resolved instance.
     /// - Throws: ``ResolutionError/notRegistered(type:)`` when no registration exists.
+    /// - Parameters:
+    ///   - qualifier: Optional name to distinguish which registration to resolve.
     /// - Note: Thread-safe.
     public func resolveOrThrow<T>(qualifier: String? = nil) throws -> T {
         let dependencyKey = DependencyName(type: T.self, qualifier: qualifier)
@@ -205,7 +218,9 @@ public final class DependencyContainer {
 
     /// Indicates whether a registration exists for a type.
     ///
-    /// - Parameter type: The type to check.
+    /// - Parameters:
+    ///   - type: The type to check.
+    ///   - qualifier: Optional name to check for a specific registration.
     /// - Returns: `true` if registered; otherwise `false`.
     public func contains<T>(
         _ type: T.Type,
@@ -219,7 +234,9 @@ public final class DependencyContainer {
 
     /// Removes an existing registration (and any cached singleton instance).
     ///
-    /// - Parameter type: The type whose registration should be removed.
+    /// - Parameters:
+    ///   - type: The type whose registration should be removed.
+    ///   - qualifier: Optional name to remove a specific registration.
     public func unregister<T>(
         _ type: T.Type,
         qualifier: String? = nil
