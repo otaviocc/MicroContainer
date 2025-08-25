@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "MicroContainer",
     platforms: [
-        .iOS(.v13), .macOS(.v10_15), .tvOS(.v13), .watchOS(.v6)
+        .iOS(.v13), .macOS(.v12), .tvOS(.v13), .watchOS(.v6)
     ],
     products: [
         .library(
@@ -14,14 +14,23 @@ let package = Package(
             targets: ["MicroContainer"]
         )
     ],
-    dependencies: [],
+    dependencies: [
+        .package(url: "https://github.com/SimplyDanny/SwiftLintPlugins", branch: "main")
+    ],
     targets: [
         .target(
             name: "MicroContainer",
-            dependencies: []),
+            dependencies: [],
+            plugins: [
+                .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")
+            ]
+        ),
         .testTarget(
             name: "MicroContainerTests",
-            dependencies: ["MicroContainer"]
+            dependencies: ["MicroContainer"],
+            plugins: [
+                .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")
+            ]
         )
     ]
 )

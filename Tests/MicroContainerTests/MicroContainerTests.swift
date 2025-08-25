@@ -271,10 +271,10 @@ final class MicroContainerTests: XCTestCase {
         )
 
         // resolved instance should be the warmed one
-        let a: Counter = container.resolve()
-        let b: Counter = container.resolve()
+        let firstCounter: Counter = container.resolve()
+        let secondCounter: Counter = container.resolve()
         XCTAssertTrue(
-            a === b,
+            firstCounter === secondCounter,
             "It should return the pre-warmed singleton instance on resolve"
         )
         XCTAssertEqual(
@@ -297,18 +297,18 @@ final class MicroContainerTests: XCTestCase {
         CycleObserver.sawCycle = false
         container.registerFactory(
             TypeA.self
-        ) { c in
+        ) { container in
             // A depends on B
-            let b: TypeB? = c.resolveOptional()
-            if b == nil { CycleObserver.sawCycle = true }
+            let maybeTypeB: TypeB? = container.resolveOptional()
+            if maybeTypeB == nil { CycleObserver.sawCycle = true }
             return TypeA()
         }
         container.registerFactory(
             TypeB.self
-        ) { c in
+        ) { container in
             // B depends on A
-            let a: TypeA? = c.resolveOptional()
-            if a == nil { CycleObserver.sawCycle = true }
+            let maybeTypeA: TypeA? = container.resolveOptional()
+            if maybeTypeA == nil { CycleObserver.sawCycle = true }
             return TypeB()
         }
 
