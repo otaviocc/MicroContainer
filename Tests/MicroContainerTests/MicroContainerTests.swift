@@ -1,6 +1,7 @@
 import XCTest
 import MicroContainer
 
+@MainActor
 final class MicroContainerTests: XCTestCase {
     func testProtocol() throws {
         let container = DependencyContainer()

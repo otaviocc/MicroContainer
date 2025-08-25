@@ -35,6 +35,7 @@ class StagingClient: ClientProtocol {}
 
 // MARK: - Counter (for warmSingletons)
 
+@MainActor
 class Counter {
     static var initCount = 0
     init() { Counter.initCount += 1 }
@@ -46,6 +47,7 @@ class TypeA {}
 class TypeB {}
 
 // Observability helper for cycle tests
+@MainActor
 enum CycleObserver {
     static var sawCycle = false
 }
