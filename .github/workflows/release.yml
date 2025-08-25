@@ -74,7 +74,7 @@ jobs:
       run: |
         BUILD_DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
 
-        cat > release_notes.md << EOF
+        cat > release_notes.md << 'EOF'
         ## 📦 MicroContainer ${{ steps.version.outputs.version }}
 
         MicroContainer is a tiny, dependency-free Swift dependency injection container.
