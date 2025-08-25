@@ -1,5 +1,10 @@
 import Foundation
 
+/// A tiny, thread-safe dependency injection container.
+///
+/// - Supports singleton (static) and factory (dynamic) lifetimes.
+/// - Thread-safe registration and resolution.
+/// - Factories receive the container, enabling nested resolutions.
 public final class DependencyContainer {
 
     // MARK: - Properties
@@ -10,10 +15,24 @@ public final class DependencyContainer {
 
     // MARK: - Life cycle
 
+    /// Creates an empty container.
     public init() {}
 
     // MARK: - Public
 
+    /// Errors that may occur during dependency resolution.
+    public enum ResolutionError: Error {
+        /// No registration exists for the requested type.
+        case notRegistered(type: Any.Type)
+    }
+
+    /// Registers a dependency.
+    ///
+    /// - Parameters:
+    ///   - type: The type to register under (usually a protocol or concrete type).
+    ///   - allocation: The lifetime of the dependency (singleton or factory).
+    ///   - factory: A factory closure that creates the instance; receives the container for nested resolution.
+    /// - Note: Thread-safe.
     public func register<T>(
         type: T.Type,
         allocation: DependencyAllocation,
@@ -32,13 +51,42 @@ public final class DependencyContainer {
         dependencies[dependency.type] = dependency
     }
 
+    /// Registers a dependency with singleton (static) lifetime.
+    ///
+    /// - Parameters:
+    ///   - type: The type to register under.
+    ///   - factory: A factory closure that creates the instance on first resolve.
+    public func registerSingleton<T>(
+        _ type: T.Type,
+        factory: @escaping (DependencyContainer) -> T
+    ) {
+        register(type: type, allocation: .static, factory: factory)
+    }
+
+    /// Registers a dependency with factory (dynamic) lifetime.
+    ///
+    /// - Parameters:
+    ///   - type: The type to register under.
+    ///   - factory: A factory closure invoked on every resolve.
+    public func registerFactory<T>(
+        _ type: T.Type,
+        factory: @escaping (DependencyContainer) -> T
+    ) {
+        register(type: type, allocation: .dynamic, factory: factory)
+    }
+
+    /// Resolves a dependency or crashes if not registered.
+    ///
+    /// - Returns: The resolved instance.
+    /// - Warning: Triggers a runtime crash if the type is not registered. Prefer `resolveOptional()` or `resolveOrThrow()` for safer behavior.
+    /// - Note: Thread-safe.
     public func resolve<T>() -> T {
         let dependencyKey = DependencyName(type: T.self)
 
         lock.lock()
         guard let dependency = dependencies[dependencyKey] as? Dependency<T> else {
             lock.unlock()
-            fatalError("\(dependencyKey) not registered")
+            fatalError("Type not registered: \(T.self)")
         }
 
         switch dependency.allocation {
@@ -58,4 +106,135 @@ public final class DependencyContainer {
             }
         }
     }
+
+    /// Resolves a dependency if registered.
+    ///
+    /// - Returns: The resolved instance or `nil` if not registered.
+    /// - Note: Thread-safe.
+    public func resolveOptional<T>() -> T? {
+        let dependencyKey = DependencyName(type: T.self)
+
+        lock.lock()
+        guard let dependency = dependencies[dependencyKey] as? Dependency<T> else {
+            lock.unlock()
+            return nil
+        }
+
+        switch dependency.allocation {
+        case .dynamic:
+            let factory = dependency.factory
+            lock.unlock()
+            return factory(self)
+        case .static:
+            if let resolvedDependency = staticDependencies[dependencyKey] as? T {
+                lock.unlock()
+                return resolvedDependency
+            } else {
+                let resolvedDependency = dependency.factory(self)
+                staticDependencies[dependencyKey] = resolvedDependency
+                lock.unlock()
+                return resolvedDependency
+            }
+        }
+    }
+
+    /// Resolves a dependency or throws if not registered.
+    ///
+    /// - Returns: The resolved instance.
+    /// - Throws: ``ResolutionError/notRegistered(type:)`` when no registration exists.
+    /// - Note: Thread-safe.
+    public func resolveOrThrow<T>() throws -> T {
+        let dependencyKey = DependencyName(type: T.self)
+
+        lock.lock()
+        guard let dependency = dependencies[dependencyKey] as? Dependency<T> else {
+            lock.unlock()
+            throw ResolutionError.notRegistered(type: T.self)
+        }
+
+        switch dependency.allocation {
+        case .dynamic:
+            let factory = dependency.factory
+            lock.unlock()
+            return factory(self)
+        case .static:
+            if let resolvedDependency = staticDependencies[dependencyKey] as? T {
+                lock.unlock()
+                return resolvedDependency
+            } else {
+                let resolvedDependency = dependency.factory(self)
+                staticDependencies[dependencyKey] = resolvedDependency
+                lock.unlock()
+                return resolvedDependency
+            }
+        }
+    }
+
+    /// Indicates whether a registration exists for a type.
+    ///
+    /// - Parameter type: The type to check.
+    /// - Returns: `true` if registered; otherwise `false`.
+    public func contains<T>(
+        _ type: T.Type
+    ) -> Bool {
+        let dependencyKey = DependencyName(type: T.self)
+        lock.lock()
+        defer { lock.unlock() }
+        return dependencies[dependencyKey] != nil
+    }
+
+    /// Removes an existing registration (and any cached singleton instance).
+    ///
+    /// - Parameter type: The type whose registration should be removed.
+    public func unregister<T>(
+        _ type: T.Type
+    ) {
+        let dependencyKey = DependencyName(type: T.self)
+        lock.lock()
+        dependencies.removeValue(forKey: dependencyKey)
+        staticDependencies.removeValue(forKey: dependencyKey)
+        lock.unlock()
+    }
+
+    /// Clears all registrations and cached singleton instances.
+    public func reset() {
+        lock.lock()
+        dependencies.removeAll(keepingCapacity: false)
+        staticDependencies.removeAll(keepingCapacity: false)
+        lock.unlock()
+    }
+
+    /// Instantiates and caches all singleton (static) registrations.
+    ///
+    /// Useful for pre-warming singletons at startup to surface failures early and reduce first-use latency.
+    public func warmSingletons() {
+        lock.lock()
+        let entries = dependencies
+        lock.unlock()
+
+        for (key, anyDependency) in entries {
+            guard let dep = anyDependency as? AnyDependencyFactoryInvocable, dep.allocation == .static else { continue }
+
+            lock.lock()
+            if staticDependencies[key] == nil {
+                let instance = dep.invokeFactory(with: self)
+                staticDependencies[key] = instance
+            }
+            lock.unlock()
+        }
+    }
+}
+
+// MARK: - Internal type erasure for warm-up support
+
+protocol AnyDependencyLifetimeProviding {
+    var allocation: DependencyAllocation { get }
+}
+
+protocol AnyDependencyFactoryInvocable: AnyDependencyLifetimeProviding {
+    func invokeFactory(with container: DependencyContainer) -> Any
+}
+
+extension Dependency: AnyDependencyFactoryInvocable {
+    func invokeFactory(with container: DependencyContainer) -> Any { factory(container) }
 }
