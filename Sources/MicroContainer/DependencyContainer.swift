@@ -39,11 +39,12 @@ public final class DependencyContainer {
     public func register<T>(
         type: T.Type,
         allocation: DependencyAllocation,
+        qualifier: String? = nil,
         factory: @escaping (DependencyContainer) -> T
     ){
         lock.lock()
         defer { lock.unlock() }
-        let dependencyKey = DependencyName(type: T.self)
+        let dependencyKey = DependencyName(type: T.self, qualifier: qualifier)
 
         let dependency = Dependency(
             type: dependencyKey,
@@ -61,9 +62,10 @@ public final class DependencyContainer {
     ///   - factory: A factory closure that creates the instance on first resolve.
     public func registerSingleton<T>(
         _ type: T.Type,
+        qualifier: String? = nil,
         factory: @escaping (DependencyContainer) -> T
     ) {
-        register(type: type, allocation: .static, factory: factory)
+        register(type: type, allocation: .static, qualifier: qualifier, factory: factory)
     }
 
     /// Registers a dependency with factory (dynamic) lifetime.
@@ -73,9 +75,10 @@ public final class DependencyContainer {
     ///   - factory: A factory closure invoked on every resolve.
     public func registerFactory<T>(
         _ type: T.Type,
+        qualifier: String? = nil,
         factory: @escaping (DependencyContainer) -> T
     ) {
-        register(type: type, allocation: .dynamic, factory: factory)
+        register(type: type, allocation: .dynamic, qualifier: qualifier, factory: factory)
     }
 
     /// Resolves a dependency or crashes if not registered.
@@ -83,8 +86,8 @@ public final class DependencyContainer {
     /// - Returns: The resolved instance.
     /// - Warning: Triggers a runtime crash if the type is not registered. Prefer `resolveOptional()` or `resolveOrThrow()` for safer behavior.
     /// - Note: Thread-safe.
-    public func resolve<T>() -> T {
-        let dependencyKey = DependencyName(type: T.self)
+    public func resolve<T>(qualifier: String? = nil) -> T {
+        let dependencyKey = DependencyName(type: T.self, qualifier: qualifier)
 
         lock.lock()
         guard let dependency = dependencies[dependencyKey] as? Dependency<T> else {
@@ -123,8 +126,8 @@ public final class DependencyContainer {
     ///
     /// - Returns: The resolved instance or `nil` if not registered.
     /// - Note: Thread-safe.
-    public func resolveOptional<T>() -> T? {
-        let dependencyKey = DependencyName(type: T.self)
+    public func resolveOptional<T>(qualifier: String? = nil) -> T? {
+        let dependencyKey = DependencyName(type: T.self, qualifier: qualifier)
 
         lock.lock()
         guard let dependency = dependencies[dependencyKey] as? Dependency<T> else {
@@ -164,8 +167,8 @@ public final class DependencyContainer {
     /// - Returns: The resolved instance.
     /// - Throws: ``ResolutionError/notRegistered(type:)`` when no registration exists.
     /// - Note: Thread-safe.
-    public func resolveOrThrow<T>() throws -> T {
-        let dependencyKey = DependencyName(type: T.self)
+    public func resolveOrThrow<T>(qualifier: String? = nil) throws -> T {
+        let dependencyKey = DependencyName(type: T.self, qualifier: qualifier)
 
         lock.lock()
         guard let dependency = dependencies[dependencyKey] as? Dependency<T> else {
@@ -205,9 +208,10 @@ public final class DependencyContainer {
     /// - Parameter type: The type to check.
     /// - Returns: `true` if registered; otherwise `false`.
     public func contains<T>(
-        _ type: T.Type
+        _ type: T.Type,
+        qualifier: String? = nil
     ) -> Bool {
-        let dependencyKey = DependencyName(type: T.self)
+        let dependencyKey = DependencyName(type: T.self, qualifier: qualifier)
         lock.lock()
         defer { lock.unlock() }
         return dependencies[dependencyKey] != nil
@@ -217,9 +221,10 @@ public final class DependencyContainer {
     ///
     /// - Parameter type: The type whose registration should be removed.
     public func unregister<T>(
-        _ type: T.Type
+        _ type: T.Type,
+        qualifier: String? = nil
     ) {
-        let dependencyKey = DependencyName(type: T.self)
+        let dependencyKey = DependencyName(type: T.self, qualifier: qualifier)
         lock.lock()
         dependencies.removeValue(forKey: dependencyKey)
         staticDependencies.removeValue(forKey: dependencyKey)
