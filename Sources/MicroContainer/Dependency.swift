@@ -12,7 +12,7 @@ struct Dependency<T> {
         type: DependencyName,
         allocation: DependencyAllocation,
         factory: @escaping (DependencyContainer) -> T
-    ){
+    ) {
         self.type = type
         self.allocation = allocation
         self.factory = factory

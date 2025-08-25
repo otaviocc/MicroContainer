@@ -46,7 +46,7 @@ public final class DependencyContainer {
         allocation: DependencyAllocation,
         qualifier: String? = nil,
         factory: @escaping (DependencyContainer) -> T
-    ){
+    ) {
         lock.lock()
         defer { lock.unlock() }
         let dependencyKey = DependencyName(type: T.self, qualifier: qualifier)
@@ -93,7 +93,8 @@ public final class DependencyContainer {
     /// - Returns: The resolved instance.
     /// - Parameters:
     ///   - qualifier: Optional name to distinguish which registration to resolve.
-    /// - Warning: Triggers a runtime crash if the type is not registered. Prefer `resolveOptional()` or `resolveOrThrow()` for safer behavior.
+    /// - Warning: Triggers a runtime crash if the type is not registered. Prefer `resolveOptional()`
+    ///            or `resolveOrThrow()` for safer behavior.
     /// - Note: Thread-safe.
     public func resolve<T>(qualifier: String? = nil) -> T {
         let dependencyKey = DependencyName(type: T.self, qualifier: qualifier)
@@ -146,7 +147,7 @@ public final class DependencyContainer {
             return nil
         }
 
-        if let _ = beginResolution(for: dependencyKey) {
+        if beginResolution(for: dependencyKey) != nil {
             lock.unlock()
             return nil
         }

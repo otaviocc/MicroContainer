@@ -1,6 +1,8 @@
 import XCTest
 import MicroContainer
 
+// swiftlint:disable type_body_length
+
 @MainActor
 final class MicroContainerTests: XCTestCase {
     func testProtocol() throws {
@@ -9,14 +11,14 @@ final class MicroContainerTests: XCTestCase {
         container.register(
             type: OvenProtocol.self,
             allocation: .static
-        ) { container in
+        ) { _ in
             Oven()
         }
 
         container.register(
             type: FridgeProtocol.self,
             allocation: .static
-        ) { container in
+        ) { _ in
             Fridge()
         }
 
@@ -44,14 +46,14 @@ final class MicroContainerTests: XCTestCase {
         container.register(
             type: Oven.self,
             allocation: .static
-        ) { container in
+        ) { _ in
             Oven()
         }
 
         container.register(
             type: Fridge.self,
             allocation: .static
-        ) { container in
+        ) { _ in
             Fridge()
         }
 
@@ -79,14 +81,14 @@ final class MicroContainerTests: XCTestCase {
         container.register(
             type: Oven.self,
             allocation: .static
-        ) { container in
+        ) { _ in
             Oven()
         }
 
         container.register(
             type: Fridge.self,
             allocation: .static
-        ) { container in
+        ) { _ in
             Fridge()
         }
 
@@ -115,14 +117,14 @@ final class MicroContainerTests: XCTestCase {
         container.register(
             type: Oven.self,
             allocation: .dynamic
-        ) { container in
+        ) { _ in
             Oven()
         }
 
         container.register(
             type: Fridge.self,
             allocation: .dynamic
-        ) { container in
+        ) { _ in
             Fridge()
         }
 
@@ -145,6 +147,7 @@ final class MicroContainerTests: XCTestCase {
         )
     }
 
+    // swiftlint:disable function_body_length
     func testQualifiers() throws {
         let container = DependencyContainer()
 
@@ -216,6 +219,7 @@ final class MicroContainerTests: XCTestCase {
             "It should not resolve the staging client after unregister"
         )
     }
+    // swiftlint:enable function_body_length
 
     func testResolveOptionalAndThrowing() {
         let container = DependencyContainer()
@@ -322,3 +326,5 @@ final class MicroContainerTests: XCTestCase {
         )
     }
 }
+
+// swiftlint:enable type_body_length

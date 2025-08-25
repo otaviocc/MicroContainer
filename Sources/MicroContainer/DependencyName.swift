@@ -14,7 +14,10 @@ struct DependencyName: Equatable, Hashable, CustomStringConvertible {
         self.qualifier = nil
     }
 
-    init(type: Any.Type, qualifier: String?) {
+    init(
+        type: Any.Type,
+        qualifier: String?
+    ) {
         self.typeId = ObjectIdentifier(type)
         self.debugName = String(reflecting: type)
         self.qualifier = qualifier
