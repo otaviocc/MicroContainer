@@ -1,5 +1,9 @@
 # MicroContainer
 
+[![codecov](https://codecov.io/github/otaviocc/MicroContainer/graph/badge.svg?token=684ATBMZH4)](https://codecov.io/github/otaviocc/MicroContainer)
+[![Check Runs](https://img.shields.io/github/check-runs/otaviocc/MicroContainer/main)](https://github.com/otaviocc/MicroContainer/actions?query=branch%3Amain)
+[![Mastodon Follow](https://img.shields.io/mastodon/follow/109580944375344260?domain=social.lol&style=flat)](https://social.lol/@otaviocc)
+
 A tiny, dependency-free Dependency Injection (DI) container for Swift.
 
 - Minimal API surface
