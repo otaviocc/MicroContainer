@@ -26,3 +26,26 @@ class Kitchen: KitchenProtocol {
         self.oven = oven
     }
 }
+
+// MARK: - Client (for qualifier tests)
+
+protocol ClientProtocol {}
+class PrimaryClient: ClientProtocol {}
+class StagingClient: ClientProtocol {}
+
+// MARK: - Counter (for warmSingletons)
+
+class Counter {
+    static var initCount = 0
+    init() { Counter.initCount += 1 }
+}
+
+// MARK: - Cyclic types
+
+class TypeA {}
+class TypeB {}
+
+// Observability helper for cycle tests
+enum CycleObserver {
+    static var sawCycle = false
+}
