@@ -1,16 +1,25 @@
-struct DependencyName: RawRepresentable, Equatable, Hashable {
+struct DependencyName: Equatable, Hashable {
 
     // MARK: - Properties
 
-    let rawValue: String
+    private let typeId: ObjectIdentifier
 
     // MARK: - Life cycle
 
-    init(rawValue: String) {
-        self.rawValue = rawValue
+    init(type: Any.Type) {
+        self.typeId = ObjectIdentifier(type)
     }
 
-    init(type: Any.Type) {
-        self.rawValue = String(describing: type)
+    // MARK: - Hashable & Equatable
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(typeId)
+    }
+
+    static func == (
+        lhs: DependencyName,
+        rhs: DependencyName
+    ) -> Bool {
+        lhs.typeId == rhs.typeId
     }
 }
