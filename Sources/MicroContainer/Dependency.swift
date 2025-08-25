@@ -1,4 +1,4 @@
-final class Dependency<T>: Hashable, Equatable {
+struct Dependency<T> {
 
     // MARK: - Properties
 
@@ -16,21 +16,5 @@ final class Dependency<T>: Hashable, Equatable {
         self.type = type
         self.allocation = allocation
         self.factory = factory
-    }
-
-    // MARK: - Public
-
-    func hash(
-        into hasher: inout Hasher
-    ) {
-        hasher.combine(type)
-        hasher.combine(allocation)
-    }
-
-    static func == (
-        lhs: Dependency,
-        rhs: Dependency
-    ) -> Bool {
-        lhs.type == rhs.type && lhs.allocation == rhs.allocation
     }
 }
