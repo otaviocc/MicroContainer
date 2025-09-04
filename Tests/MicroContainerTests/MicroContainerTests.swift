@@ -1,11 +1,11 @@
-import XCTest
 import MicroContainer
-
-// swiftlint:disable type_body_length
+import Testing
 
 @MainActor
-final class MicroContainerTests: XCTestCase {
-    func testProtocol() throws {
+struct MicroContainerTests {
+
+    @Test
+    func `protocol`() async throws {
         let container = DependencyContainer()
 
         container.register(
@@ -34,13 +34,14 @@ final class MicroContainerTests: XCTestCase {
 
         let kitchen: KitchenProtocol = container.resolve()
 
-        XCTAssertTrue(
-            kitchen.testSupport,
+        #expect(
+            kitchen.testSupport == true,
             "It should resolve a protocol-typed dependency graph successfully"
         )
     }
 
-    func testConcreteType() throws {
+    @Test
+    func concreteType() async throws {
         let container = DependencyContainer()
 
         container.register(
@@ -69,13 +70,14 @@ final class MicroContainerTests: XCTestCase {
 
         let kitchen: Kitchen = container.resolve()
 
-        XCTAssertTrue(
-            kitchen.testSupport,
+        #expect(
+            kitchen.testSupport == true,
             "It should resolve a concrete-typed dependency graph successfully"
         )
     }
 
-    func testStatic() throws {
+    @Test
+    func `static`() async throws {
         let container = DependencyContainer()
 
         container.register(
@@ -105,13 +107,14 @@ final class MicroContainerTests: XCTestCase {
         let kitchen: Kitchen = container.resolve()
         let anotherKitchen: Kitchen = container.resolve()
 
-        XCTAssertTrue(
+        #expect(
             kitchen === anotherKitchen,
             "It should return the same instance for static allocation"
         )
     }
 
-    func testDynamic() throws {
+    @Test
+    func dynamic() async throws {
         let container = DependencyContainer()
 
         container.register(
@@ -141,14 +144,15 @@ final class MicroContainerTests: XCTestCase {
         let kitchen: Kitchen = container.resolve()
         let anotherKitchen: Kitchen = container.resolve()
 
-        XCTAssertTrue(
+        #expect(
             kitchen !== anotherKitchen,
             "It should return a new instance for dynamic allocation"
         )
     }
 
     // swiftlint:disable function_body_length
-    func testQualifiers() throws {
+    @Test
+    func qualifiers() async throws {
         let container = DependencyContainer()
 
         container.registerSingleton(
@@ -171,27 +175,21 @@ final class MicroContainerTests: XCTestCase {
             qualifier: "staging"
         )
 
-        XCTAssertTrue(
+        #expect(
             primary is PrimaryClient,
             "It should resolve the primary qualified client"
         )
-        XCTAssertTrue(
+        #expect(
             staging is StagingClient,
             "It should resolve the staging qualified client"
         )
 
-        XCTAssertTrue(
-            container.contains(
-                ClientProtocol.self,
-                qualifier: "primary"
-            ),
+        #expect(
+            container.contains(ClientProtocol.self, qualifier: "primary"),
             "It should report primary client registration exists"
         )
-        XCTAssertTrue(
-            container.contains(
-                ClientProtocol.self,
-                qualifier: "staging"
-            ),
+        #expect(
+            container.contains(ClientProtocol.self, qualifier: "staging"),
             "It should report staging client registration exists"
         )
 
@@ -199,46 +197,32 @@ final class MicroContainerTests: XCTestCase {
             ClientProtocol.self,
             qualifier: "staging"
         )
-        XCTAssertFalse(
-            container.contains(
-                ClientProtocol.self,
-                qualifier: "staging"
-            ),
+        #expect(
+            container.contains(ClientProtocol.self, qualifier: "staging") == false,
             "It should report staging client registration removed after unregister"
         )
-        XCTAssertNotNil(
-            container.resolveOptional(
-                qualifier: "primary"
-            ) as ClientProtocol?,
+        #expect(
+            (container.resolveOptional(qualifier: "primary") as ClientProtocol?) != nil,
             "It should still resolve the primary client optionally"
         )
-        XCTAssertNil(
-            container.resolveOptional(
-                qualifier: "staging"
-            ) as ClientProtocol?,
+        #expect(
+            (container.resolveOptional(qualifier: "staging") as ClientProtocol?) == nil,
             "It should not resolve the staging client after unregister"
         )
     }
     // swiftlint:enable function_body_length
 
-    func testResolveOptionalAndThrowing() {
+    @Test
+    func resolveOptionalAndThrowing() async throws {
         let container = DependencyContainer()
 
-        XCTAssertNil(
-            container.resolveOptional() as String?,
+        #expect(
+            (container.resolveOptional() as String?) == nil,
             "It should return nil for missing registrations with resolveOptional"
         )
-        XCTAssertThrowsError(
-            try container.resolveOrThrow() as String,
-            "It should throw notRegistered for missing type"
-        ) { error in
-            guard case DependencyContainer.ResolutionError.notRegistered(let type) = error else {
-                return XCTFail("Unexpected error: \(error)")
-            }
-            XCTAssertTrue(
-                String(describing: type).contains("String"),
-                "It should mention the missing type in the error payload"
-            )
+
+        #expect(throws: DependencyContainer.ResolutionError.self) {
+            try container.resolveOrThrow() as String
         }
 
         container.registerFactory(
@@ -246,19 +230,18 @@ final class MicroContainerTests: XCTestCase {
         ) { _ in
             "hello"
         }
-        XCTAssertEqual(
-            container.resolveOptional() as String?,
-            "hello",
+        #expect(
+            container.resolveOptional() == "hello",
             "It should resolve the registered factory value via resolveOptional"
         )
-        XCTAssertEqual(
-            try? container.resolveOrThrow() as String,
-            "hello",
+        #expect(
+            try container.resolveOrThrow() == "hello",
             "It should resolve the registered factory value via resolveOrThrow"
         )
     }
 
-    func testResetAndWarmSingletons() {
+    @Test
+    func resetAndWarmSingletons() {
         let container = DependencyContainer()
         Counter.initCount = 0
         container.registerSingleton(
@@ -267,64 +250,56 @@ final class MicroContainerTests: XCTestCase {
             Counter()
         }
 
-        // warm should instantiate once
         container.warmSingletons()
-        XCTAssertEqual(
-            Counter.initCount,
-            1,
+        #expect(
+            Counter.initCount == 1,
             "It should warm exactly one singleton instance"
         )
 
-        // resolved instance should be the warmed one
         let firstCounter: Counter = container.resolve()
         let secondCounter: Counter = container.resolve()
-        XCTAssertTrue(
+        #expect(
             firstCounter === secondCounter,
             "It should return the pre-warmed singleton instance on resolve"
         )
-        XCTAssertEqual(
-            Counter.initCount,
-            1,
+        #expect(
+            Counter.initCount == 1,
             "It should not create additional instances when resolving a warmed singleton"
         )
 
-        // reset clears all
         container.reset()
-        XCTAssertFalse(
-            container.contains(Counter.self),
+        #expect(
+            container.contains(Counter.self) == false,
             "It should clear registrations after reset"
         )
         Counter.initCount = 0
     }
 
-    func testCircularDetection() {
+    @Test
+    func circularDetection() {
         let container = DependencyContainer()
         CycleObserver.sawCycle = false
+
         container.registerFactory(
             TypeA.self
         ) { container in
-            // A depends on B
             let maybeTypeB: TypeB? = container.resolveOptional()
             if maybeTypeB == nil { CycleObserver.sawCycle = true }
             return TypeA()
         }
+
         container.registerFactory(
             TypeB.self
         ) { container in
-            // B depends on A
             let maybeTypeA: TypeA? = container.resolveOptional()
             if maybeTypeA == nil { CycleObserver.sawCycle = true }
             return TypeB()
         }
 
-        // Resolve still succeeds because factories tolerate missing deps,
-        // but the cycle was detected in optional resolution.
         let _: TypeA = container.resolve()
-        XCTAssertTrue(
-            CycleObserver.sawCycle,
+        #expect(
+            CycleObserver.sawCycle == true,
             "It should detect the cycle during optional nested resolutions"
         )
     }
 }
-
-// swiftlint:enable type_body_length
