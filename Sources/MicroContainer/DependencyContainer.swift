@@ -278,23 +278,10 @@ public final class DependencyContainer {
     }
 }
 
-// MARK: - Internal type erasure for warm-up support
-
-protocol AnyDependencyLifetimeProviding {
-    var allocation: DependencyAllocation { get }
-}
-
-protocol AnyDependencyFactoryInvocable: AnyDependencyLifetimeProviding {
-    func invokeFactory(with container: DependencyContainer) -> Any
-}
-
-extension Dependency: AnyDependencyFactoryInvocable {
-    func invokeFactory(with container: DependencyContainer) -> Any { factory(container) }
-}
-
 // MARK: - Circular dependency tracking
 
 private extension DependencyContainer {
+
     func beginResolution(for key: DependencyName) -> [String]? {
         let name = String(describing: key)
         var stack = Thread.current.threadDictionary[resolutionStackKey] as? [String] ?? []

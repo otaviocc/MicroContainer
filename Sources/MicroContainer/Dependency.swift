@@ -18,3 +18,13 @@ struct Dependency<T> {
         self.factory = factory
     }
 }
+
+// MARK: - AnyDependencyFactoryInvocable
+
+extension Dependency: AnyDependencyFactoryInvocable {
+    func invokeFactory(
+        with container: DependencyContainer
+    ) -> Any {
+        factory(container)
+    }
+}
