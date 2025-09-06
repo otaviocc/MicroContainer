@@ -9,17 +9,17 @@ struct DependencyName: Equatable, Hashable, CustomStringConvertible {
     // MARK: - Life cycle
 
     init(type: Any.Type) {
-        self.typeId = ObjectIdentifier(type)
-        self.debugName = String(reflecting: type)
-        self.qualifier = nil
+        typeId = ObjectIdentifier(type)
+        debugName = String(reflecting: type)
+        qualifier = nil
     }
 
     init(
         type: Any.Type,
         qualifier: String?
     ) {
-        self.typeId = ObjectIdentifier(type)
-        self.debugName = String(reflecting: type)
+        typeId = ObjectIdentifier(type)
+        debugName = String(reflecting: type)
         self.qualifier = qualifier
     }
 
@@ -40,7 +40,7 @@ struct DependencyName: Equatable, Hashable, CustomStringConvertible {
     // MARK: - CustomStringConvertible
 
     var description: String {
-        if let qualifier = qualifier {
+        if let qualifier {
             return "\(debugName) [qualifier=\(qualifier)]"
         }
         return debugName

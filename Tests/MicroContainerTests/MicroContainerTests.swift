@@ -1,6 +1,8 @@
 import MicroContainer
 import Testing
 
+// swiftlint:disable type_body_length
+
 @MainActor
 struct MicroContainerTests {
 
@@ -210,6 +212,7 @@ struct MicroContainerTests {
             "It should not resolve the staging client after unregister"
         )
     }
+
     // swiftlint:enable function_body_length
 
     @Test
@@ -303,3 +306,5 @@ struct MicroContainerTests {
         )
     }
 }
+
+// swiftlint:enable type_body_length

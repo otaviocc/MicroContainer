@@ -22,6 +22,7 @@ struct Dependency<T> {
 // MARK: - AnyDependencyFactoryInvocable
 
 extension Dependency: AnyDependencyFactoryInvocable {
+
     func invokeFactory(
         with container: DependencyContainer
     ) -> Any {
