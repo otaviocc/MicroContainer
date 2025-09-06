@@ -24,6 +24,7 @@ public final class DependencyContainer {
 
     /// Errors that may occur during dependency resolution.
     public enum ResolutionError: Error {
+
         /// No registration exists for the requested type.
         case notRegistered(type: Any.Type)
         /// A circular dependency was detected while resolving.

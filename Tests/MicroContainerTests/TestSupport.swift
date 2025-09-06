@@ -11,9 +11,12 @@ class Fridge: FridgeProtocol {}
 // MARK: - Kitchen
 
 protocol KitchenProtocol {
+
     var testSupport: Bool { get }
 }
+
 class Kitchen: KitchenProtocol {
+
     let fridge: FridgeProtocol
     let oven: OvenProtocol
     var testSupport = true
@@ -37,6 +40,7 @@ class StagingClient: ClientProtocol {}
 
 @MainActor
 class Counter {
+
     static var initCount = 0
     init() { Counter.initCount += 1 }
 }
@@ -49,5 +53,6 @@ class TypeB {}
 // Observability helper for cycle tests
 @MainActor
 enum CycleObserver {
+
     static var sawCycle = false
 }
