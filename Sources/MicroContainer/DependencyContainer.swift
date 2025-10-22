@@ -279,6 +279,33 @@ public final class DependencyContainer {
     }
 }
 
+// MARK: - Result Builder Support
+
+public extension DependencyContainer {
+
+    /// Creates a container with dependencies registered using result builder syntax.
+    ///
+    /// Example:
+    ///
+    /// ```swift
+    /// let container = DependencyContainer {
+    ///     Singleton(Logger.self) { _ in Logger() }
+    ///     Singleton(HTTPClient.self) { _ in HTTPClient() }
+    ///     Factory(ViewModel.self) { container in
+    ///         ViewModel(service: container.resolve())
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// - Parameter registrations: A result builder closure containing dependency registrations.
+    convenience init(
+        @DependencyBuilder _ registrations: () -> [Registration]
+    ) {
+        self.init()
+        registrations().forEach { $0.apply(to: self) }
+    }
+}
+
 // MARK: - Circular dependency tracking
 
 private extension DependencyContainer {
