@@ -6,7 +6,7 @@ import Foundation
 /// - Optional qualifiers for multiple registrations of the same type.
 /// - Thread-safe registration and resolution.
 /// - Factories receive the container, enabling nested resolutions.
-public final class DependencyContainer {
+public final class DependencyContainer: @unchecked Sendable {
 
     // MARK: - Properties
 
