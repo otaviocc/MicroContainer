@@ -1,3 +1,25 @@
+// MIT License
+//
+// Copyright (c) 2026 Otávio C.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 import MicroContainer
 import Testing
 
@@ -5,7 +27,7 @@ import Testing
 struct ResultBuilderTests {
 
     @Test
-    func basicSingletonRegistration() async throws {
+    func basicSingletonRegistration() {
         let container = DependencyContainer {
             Singleton(Oven.self) { _ in
                 Oven()
@@ -22,7 +44,7 @@ struct ResultBuilderTests {
     }
 
     @Test
-    func basicFactoryRegistration() async throws {
+    func basicFactoryRegistration() {
         let container = DependencyContainer {
             Factory(Oven.self) { _ in
                 Oven()
@@ -39,7 +61,7 @@ struct ResultBuilderTests {
     }
 
     @Test
-    func multipleDependencies() async throws {
+    func multipleDependencies() {
         let container = DependencyContainer {
             Singleton(Oven.self) { _ in
                 Oven()
@@ -64,7 +86,7 @@ struct ResultBuilderTests {
     }
 
     @Test
-    func protocolRegistration() async throws {
+    func protocolRegistration() {
         let container = DependencyContainer {
             Singleton(OvenProtocol.self) { _ in
                 Oven()
@@ -89,7 +111,7 @@ struct ResultBuilderTests {
     }
 
     @Test
-    func qualifiedDependencies() async throws {
+    func qualifiedDependencies() {
         let container = DependencyContainer {
             Singleton(ClientProtocol.self, qualifier: "primary") { _ in
                 PrimaryClient()
@@ -113,7 +135,7 @@ struct ResultBuilderTests {
     }
 
     @Test
-    func mixedSingletonAndFactory() async throws {
+    func mixedSingletonAndFactory() {
         let container = DependencyContainer {
             Singleton(Oven.self) { _ in
                 Oven()
@@ -139,7 +161,7 @@ struct ResultBuilderTests {
     }
 
     @Test
-    func emptyContainer() async throws {
+    func emptyContainer() {
         let container = DependencyContainer {}
 
         #expect(
@@ -149,7 +171,7 @@ struct ResultBuilderTests {
     }
 
     @Test
-    func multipleQualifiedRegistrations() async throws {
+    func multipleQualifiedRegistrations() {
         let container = DependencyContainer {
             Singleton(Oven.self, qualifier: "oven1") { _ in
                 Oven()
@@ -177,7 +199,7 @@ struct ResultBuilderTests {
     }
 
     @Test
-    func nestedResolution() async throws {
+    func nestedResolution() {
         let container = DependencyContainer {
             Factory(Oven.self) { _ in
                 Oven()
@@ -207,7 +229,7 @@ struct ResultBuilderTests {
     }
 
     @Test
-    func moreThanSixRegistrations() async throws {
+    func moreThanSixRegistrations() {
         // Test that buildPartialBlock allows unlimited registrations
         let container = DependencyContainer {
             Singleton(Oven.self, qualifier: "1") { _ in Oven() }
